@@ -1,0 +1,352 @@
+# WiperTrace signature database
+#
+# Each rule turns one documented, reproducible tool behaviour into a machine-
+# checkable test. Rules declare the artifact(s) they need (`requires`; "a|b" means
+# either), so a missing or rolled-over artifact makes a rule *not evaluable*
+# instead of *not matched*.
+#
+# weight      relative evidential value (discriminating journal rules highest)
+# calibrated  false = provisional threshold derived from a qualitative
+#             observation rather than a measured distribution.
+#
+# Thresholds were derived from controlled lab runs of each tool on Windows 10/11
+# NTFS (clean and hard shutdown), cross-checked against the published
+# references listed per tool.
+
+schema_version: 1
+db_version: "0.1.0"
+derived_from: "Controlled lab runs, one build per tool; Windows 10/11 NTFS"
+
+tools:
+  sdelete:
+    display_name: Sysinternals SDelete
+    versions_observed: ["2.05"]
+    references:
+      - "Russinovich & Margosis, Troubleshooting with the Windows Sysinternals Tools, 2nd ed., 2016"
+      - "Carrier, File System Forensic Analysis, 2005"
+  cipher:
+    display_name: cipher.exe /w
+    versions_observed: ["Windows 11 built-in"]
+    references:
+      - "Garfinkel & Malan, One Big File Is Not Enough, PET 2006"
+  bleachbit6:
+    display_name: BleachBit 6.x
+    versions_observed: ["6.0.4"]
+    notes: "v6.0.1+ behaviour: one same-length random rename per file"
+  bleachbit4:
+    display_name: BleachBit 4.x
+    versions_observed: ["4.6.0"]
+    notes: "long (~226 char) rename then 1-char rename"
+  eraser:
+    display_name: Eraser
+    versions_observed: ["6.2.0.2996"]
+    references:
+      - "Horsman, Digital tool marks (DTMs): A forensic analysis of file wiping software, AJFS 2021"
+      - "Zareen, Aslam & Akhlaq, Criteria for validating secure wiping tools, IFIP DF 2015"
+
+rules:
+  # ------------------------------------------------------------------ SDelete
+  - id: SDEL-USN-001
+    tool: sdelete
+    description: "Letter renames per file: AAAA.AAA, BBBB.BBB … ZZZZ.ZZZ (26) in $UsnJrnl"
+    requires: [usnjrnl]
+    weight: 4
+    kind: rename_chain
+    params:
+      min_renames: 20          # 26 letters + final file-ID name; tolerate hard-shutdown loss
+      max_renames: 30
+      name_regex: '^([A-Z])\1*(\.\1+)?$'
+      min_regex_matches: 20
+      letter_progression: 20
+      # NOTE: delete record deliberately NOT required (absent after hard shutdown)
+
+  - id: SDEL-LOG-001
+    tool: sdelete
+    description: "Letter rename names for one file visible in $LogFile"
+    requires: [logfile]
+    weight: 3
+    kind: match
+    params:
+      sources: [logfile]
+      where:
+        name: {regex: '^([A-Z])\1*(\.\1+)?$'}
+      per_file: true
+      min_count: 20
+
+  - id: SDEL-LOG-002
+    tool: sdelete
+    description: "~27 CreateAttribute/DeleteAttribute pairs per file in $LogFile"
+    requires: [logfile]
+    weight: 2
+    kind: per_file_count
+    params:
+      source: logfile
+      counts:
+        CreateAttribute: [20, 40]
+        DeleteAttribute: [20, 40]
+
+  - id: SDEL-MFT-001
+    tool: sdelete
+    description: "24-char file-ID name parked in $Extend\\$Deleted (original size retained)"
+    requires: [mft]
+    weight: 1.5
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        parent_path: {contains: '$Extend\$Deleted'}
+        name_len: 24
+
+  - id: SDEL-PF-001
+    tool: sdelete
+    description: "SDelete execution (Prefetch) or presence (Amcache)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^SDELETE(64|64A)?\.EXE$'}
+
+  - id: SDEL-COR-001
+    tool: sdelete
+    description: "Letter-rename burst within 15 min of an SDelete run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [SDEL-USN-001, SDEL-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ cipher /w
+  - id: CIPH-USN-001
+    tool: cipher
+    description: "EFSTMPWP free-space fill directory created"
+    requires: [usnjrnl]
+    weight: 4
+    kind: match
+    params:
+      sources: [usnjrnl]
+      ops: [FileCreate]
+      where:
+        name: {iregex: '^EFSTMPWP$'}
+
+  - id: CIPH-MFT-001
+    tool: cipher
+    description: "EFSTMPWP directory record in $MFT"
+    requires: [mft]
+    weight: 2
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        name: {iregex: '^EFSTMPWP$'}
+
+  - id: CIPH-LOG-001
+    tool: cipher
+    description: "Hundreds of bitmap set/clear + mapping-pair updates per fill file"
+    requires: [logfile]
+    weight: 2
+    calibrated: false
+    kind: per_file_count
+    params:
+      source: logfile
+      counts:
+        "SetBitsInNonresidentBitMap|ClearBitsInNonresidentBitMap": [100, null]
+        UpdateMappingPairs: [50, null]
+
+  - id: CIPH-PF-001
+    tool: cipher
+    description: "cipher.exe execution (also used for legitimate EFS work)"
+    requires: ["prefetch|amcache"]
+    weight: 1.5
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^CIPHER\.EXE$'}
+
+  - id: CIPH-COR-001
+    tool: cipher
+    description: "EFSTMPWP creation within 15 min of a cipher.exe run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [CIPH-USN-001, CIPH-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ BleachBit 6
+  - id: BB6-USN-001
+    tool: bleachbit6
+    description: "Exactly one same-length random rename per file"
+    requires: [usnjrnl]
+    weight: 4
+    kind: rename_chain
+    params:
+      min_renames: 1
+      max_renames: 1
+      same_length_as_original: true
+      exclude_name_regex: '^\$[RI][A-Z0-9]{6}'   # Recycle Bin
+      min_files: 3                               # resist incidental user renames
+
+  - id: BB6-MFT-001
+    tool: bleachbit6
+    description: "Deleted records truncated to size 0 with timestamps kept"
+    requires: [mft]
+    weight: 1
+    calibrated: false
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        in_use: false
+        is_directory: false
+        size: 0
+        all_ts_1601: false
+        name_len: {range: [2, null]}
+      min_count: 3
+
+  - id: BB6-PF-001
+    tool: bleachbit6
+    description: "BleachBit execution (cannot separate 4.x/6.x by name)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^BLEACHBIT(_CONSOLE)?\.EXE$'}
+
+  - id: BB6-COR-001
+    tool: bleachbit6
+    description: "Same-length renames within 15 min of a BleachBit run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [BB6-USN-001, BB6-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ BleachBit 4
+  - id: BB4-USN-001
+    tool: bleachbit4
+    description: "Rename to a ~226-char random name, then to a 1-char name"
+    requires: [usnjrnl]
+    weight: 4
+    kind: rename_chain
+    params:
+      min_renames: 2
+      max_renames: 2
+      length_sequence: [[200, 255], [1, 1]]
+
+  - id: BB4-MFT-001
+    tool: bleachbit4
+    description: "Deleted records with a 1-character name"
+    requires: [mft]
+    weight: 1.5
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        in_use: false
+        name_len: 1
+      min_count: 3
+
+  - id: BB4-LOG-001
+    tool: bleachbit4
+    description: "WriteEndOfFileRecordSegment + InitializeFileRecordSegment per file (long name overflow)"
+    requires: [logfile]
+    weight: 1.5
+    calibrated: false
+    kind: per_file_count
+    params:
+      source: logfile
+      counts:
+        WriteEndOfFileRecordSegment: [1, null]
+        InitializeFileRecordSegment: [1, null]
+      min_files: 3
+
+  - id: BB4-PF-001
+    tool: bleachbit4
+    description: "BleachBit execution (cannot separate 4.x/6.x by name)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^BLEACHBIT(_CONSOLE)?\.EXE$'}
+
+  - id: BB4-COR-001
+    tool: bleachbit4
+    description: "Long-then-short renames within 15 min of a BleachBit run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [BB4-USN-001, BB4-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ Eraser
+  - id: ERA-USN-001
+    tool: eraser
+    description: "Seven random renames per file"
+    requires: [usnjrnl]
+    weight: 3
+    kind: rename_chain
+    params:
+      min_renames: 6
+      max_renames: 8
+      exclude_name_regex: '^\$[RI][A-Z0-9]{6}'
+
+  - id: ERA-USN-002
+    tool: eraser
+    description: "~16 BASIC_INFO_CHANGE records per file (timestamp reset)"
+    requires: [usnjrnl]
+    weight: 3
+    kind: per_file_count
+    params:
+      source: usnjrnl
+      counts:
+        BasicInfoChange: [12, 20]
+
+  - id: ERA-MFT-001
+    tool: eraser
+    description: "Size 0 with every timestamp set to 1601-01-01"
+    requires: [mft]
+    weight: 3
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        all_ts_1601: true
+        size: 0
+
+  - id: ERA-LOG-001
+    tool: eraser
+    description: "Many UpdateResidentValue operations per file"
+    requires: [logfile]
+    weight: 1
+    calibrated: false
+    kind: per_file_count
+    params:
+      source: logfile
+      counts:
+        UpdateResidentValue: [20, null]
+
+  - id: ERA-PF-001
+    tool: eraser
+    description: "Eraser execution (Prefetch) or install stub (Amcache)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^ERASER\.EXE$'}
+
+  - id: ERA-COR-001
+    tool: eraser
+    description: "Seven-rename chains within 15 min of an Eraser run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [ERA-USN-001, ERA-PF-001]
+      window_seconds: 900

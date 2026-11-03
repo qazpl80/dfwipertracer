@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wipertrace"
+version = "0.1.0"
+description = "Multi-artifact attribution of NTFS file-wiping tools"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+# Needed only for `wipertrace collect` (extracting artifacts from a disk image)
+image = ["pytsk3>=20231007", "libewf-python>=20231119"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+wipertrace = "wipertrace.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["wipertrace*"]
+
+[tool.setuptools.package-data]
+wipertrace = ["signatures/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
