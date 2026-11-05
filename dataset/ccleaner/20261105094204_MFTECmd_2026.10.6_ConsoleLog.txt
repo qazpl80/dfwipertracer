@@ -1,0 +1,11 @@
+[17:42:04.936 INF] MFTECmd version 2026.10.6
+
+Author: Eric Zimmerman (saericzimmerman@gmail.com)
+https://github.com/EricZimmerman/MFTECmd
+[17:42:04.966 INF] Command line: -f D:\$MFT --csv C:\ForensicDataset\ccleaner --csvf mftecmd_$MFT_Output.csv
+[17:42:04.968 INF] Console log: C:\ForensicDataset\ccleaner\20261105094204_MFTECmd_2026.10.6_ConsoleLog.txt
+[17:42:05.470 INF] File type: Mft
+[17:42:05.594 WRN] D:\$MFT is in use. Rerouting...
+[17:42:05.654 INF] Processed D:\$MFT in 0.0602 seconds
+[17:42:05.656 INF] D:\$MFT: FILE records found: 36 (Free records: 977) File size: 1MB
+[17:42:05.658 INF] 	CSV output will be saved to C:\ForensicDataset\ccleaner\mftecmd_$MFT_Output.csv

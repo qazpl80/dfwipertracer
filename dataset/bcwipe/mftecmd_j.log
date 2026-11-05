@@ -1,0 +1,27 @@
+MFTECmd version 2026.10.6
+
+Author: Eric Zimmerman (saericzimmerman@gmail.com)
+https://github.com/EricZimmerman/MFTECmd
+
+Command line: -f D:\$Extend\$UsnJrnl:$J -m D:\$MFT --csv C:\ForensicDataset\bcwipe --csvf mftecmd_$J_Output.csv
+
+Console log: C:\ForensicDataset\bcwipe\20261105095834_MFTECmd_2026.10.6_ConsoleLog.txt
+
+File type: UsnJournal
+
+D:\$MFT is in use. Rerouting...
+
+Processed D:\$MFT in 0.0356 seconds
+
+D:\$MFT: FILE records found: 36 (Free records: 979) File size: 1MB
+	CSV output will be saved to C:\ForensicDataset\bcwipe\20261105095834_MFTECmd_$MFT_Output.csv
+
+D:\$Extend\$UsnJrnl:$J is in use. Rerouting...
+
+
+Processed D:\$Extend\$UsnJrnl:$J in 0.0042 seconds
+
+Usn entries found in D:\$Extend\$UsnJrnl:$J: 1,413
+	Parent paths rewound through the journal in 0.0038 seconds. 1,268 differ from the $MFT alone (directories since deleted, reused, renamed or moved)
+	CSV output will be saved to C:\ForensicDataset\bcwipe\mftecmd_$J_Output.csv
+

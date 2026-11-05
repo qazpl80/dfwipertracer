@@ -1,0 +1,140 @@
+﻿{
+    "scenario":  "bcwipe",
+    "start_time":  "2026-11-05T09:58:15.694Z",
+    "end_time":  "2026-11-05T09:58:26.944Z",
+    "wiper_exe":  "C:\\Program Files (x86)\\Jetico\\BCWipe\\bcwipe.exe",
+    "wiper_exit_code":  0,
+    "wipe_notes":  [
+
+                   ],
+    "target_dir":  "D:\\corpus",
+    "target_volume":  "D:",
+    "file_count":  10,
+    "targeted_files":  [
+                           {
+                               "name":  "incident_001_9c26e2.docx",
+                               "path":  "D:\\corpus\\incident_001_9c26e2.docx",
+                               "extension":  "docx",
+                               "size_bytes":  1164333,
+                               "sha256":  "94CCEC198E8B23D589460E0A39B5DD3FF54794FF430BD06EA1890CF5C0B6639B",
+                               "created_utc":  "2026-11-05T09:58:07.1205309Z",
+                               "modified_utc":  "2026-11-05T09:58:07.7161192Z",
+                               "accessed_utc":  "2026-11-05T09:58:07.7161192Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "meeting_002_abd69e.xlsx",
+                               "path":  "D:\\corpus\\meeting_002_abd69e.xlsx",
+                               "extension":  "xlsx",
+                               "size_bytes":  981766,
+                               "sha256":  "45E076B35CC8FAB67D04EDEF0417D7E69C0E7D38F8F7774F35D66E386C524FBC",
+                               "created_utc":  "2026-11-05T09:58:07.8420468Z",
+                               "modified_utc":  "2026-11-05T09:58:08.3591394Z",
+                               "accessed_utc":  "2026-11-05T09:58:08.3591394Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "compliance_003_2a4109.pdf",
+                               "path":  "D:\\corpus\\compliance_003_2a4109.pdf",
+                               "extension":  "pdf",
+                               "size_bytes":  489638,
+                               "sha256":  "1B1E8E0C60CA4D95DFB56997755A212549385CC37ADE78A2D49F0924F1253546",
+                               "created_utc":  "2026-11-05T09:58:08.5073408Z",
+                               "modified_utc":  "2026-11-05T09:58:08.5073408Z",
+                               "accessed_utc":  "2026-11-05T09:58:08.5073408Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "audit_004_20c005.txt",
+                               "path":  "D:\\corpus\\audit_004_20c005.txt",
+                               "extension":  "txt",
+                               "size_bytes":  361198,
+                               "sha256":  "0EF1CE978ED848E679F1DFC2B74C34C1CE9CF43BCB44ADBB64F7F21EC7559233",
+                               "created_utc":  "2026-11-05T09:58:08.6265299Z",
+                               "modified_utc":  "2026-11-05T09:58:08.6265299Z",
+                               "accessed_utc":  "2026-11-05T09:58:08.6265299Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "budget_005_c75494.docx",
+                               "path":  "D:\\corpus\\budget_005_c75494.docx",
+                               "extension":  "docx",
+                               "size_bytes":  165382,
+                               "sha256":  "EF7B229CAF8841FF86CED1F4F4FF896DF687F733CB46911329D428F9587E06CC",
+                               "created_utc":  "2026-11-05T09:58:08.6405759Z",
+                               "modified_utc":  "2026-11-05T09:58:08.7131029Z",
+                               "accessed_utc":  "2026-11-05T09:58:08.7131029Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "summary_006_7b718c.xlsx",
+                               "path":  "D:\\corpus\\summary_006_7b718c.xlsx",
+                               "extension":  "xlsx",
+                               "size_bytes":  1368550,
+                               "sha256":  "3656D963CF9591DB733C8EE070F310311E828E9AB3E7EB3CF5CD89BBE77EC305",
+                               "created_utc":  "2026-11-05T09:58:08.7346731Z",
+                               "modified_utc":  "2026-11-05T09:58:09.3700781Z",
+                               "accessed_utc":  "2026-11-05T09:58:09.3700781Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "client_007_626a67.pdf",
+                               "path":  "D:\\corpus\\client_007_626a67.pdf",
+                               "extension":  "pdf",
+                               "size_bytes":  358083,
+                               "sha256":  "3BF22675C9BE50F4E94452A23C6309CD404A8F79571940566BA443DAB30D4270",
+                               "created_utc":  "2026-11-05T09:58:09.4934507Z",
+                               "modified_utc":  "2026-11-05T09:58:09.4960171Z",
+                               "accessed_utc":  "2026-11-05T09:58:09.4960171Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "schedule_008_d2bbf1.txt",
+                               "path":  "D:\\corpus\\schedule_008_d2bbf1.txt",
+                               "extension":  "txt",
+                               "size_bytes":  278203,
+                               "sha256":  "31C9FDA398DCE6BD959A2190EA79588874941E6F9780F03CE141289BA90F04BA",
+                               "created_utc":  "2026-11-05T09:58:09.5592002Z",
+                               "modified_utc":  "2026-11-05T09:58:09.5592002Z",
+                               "accessed_utc":  "2026-11-05T09:58:09.5592002Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "audit_009_5be4e4.docx",
+                               "path":  "D:\\corpus\\audit_009_5be4e4.docx",
+                               "extension":  "docx",
+                               "size_bytes":  1392629,
+                               "sha256":  "095D58240316B6E270276B87DACFFF126324CA79E00071F6434ABF50B55F4F2A",
+                               "created_utc":  "2026-11-05T09:58:09.5798131Z",
+                               "modified_utc":  "2026-11-05T09:58:10.1654396Z",
+                               "accessed_utc":  "2026-11-05T09:58:10.1654396Z",
+                               "exists_after_wipe":  false
+                           },
+                           {
+                               "name":  "client_010_b08993.xlsx",
+                               "path":  "D:\\corpus\\client_010_b08993.xlsx",
+                               "extension":  "xlsx",
+                               "size_bytes":  958947,
+                               "sha256":  "ABA8DB9CFA9FA9865F2174063D9FEBFC10A65C2963FA8FC0301BD884AFC0CD63",
+                               "created_utc":  "2026-11-05T09:58:10.1878584Z",
+                               "modified_utc":  "2026-11-05T09:58:10.6472765Z",
+                               "accessed_utc":  "2026-11-05T09:58:10.6472765Z",
+                               "exists_after_wipe":  false
+                           }
+                       ],
+    "os_version":  {
+                       "caption":  "Microsoft Windows 11 Pro",
+                       "version":  "10.0.26300",
+                       "build":  "26300",
+                       "ubr":  9457,
+                       "arch":  "64-bit"
+                   },
+    "hostname":  "DESKTOP-2DEEKGL",
+    "parse_results":  {
+                          "mft":  "ok",
+                          "usnjrnl":  "ok",
+                          "prefetch":  "ok",
+                          "amcache":  "ok"
+                      },
+    "generated_utc":  "2026-11-05T09:58:44.6624443Z"
+}

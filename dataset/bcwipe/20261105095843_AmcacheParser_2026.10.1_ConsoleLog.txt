@@ -1,0 +1,13 @@
+[17:58:43.747 INF] AmcacheParser version 2026.10.1
+
+Author: Eric Zimmerman (saericzimmerman@gmail.com)
+https://github.com/EricZimmerman/AmcacheParser
+[17:58:43.755 INF] Command line: -f C:\ForensicDataset\bcwipe\_amcache_tmp\Amcache.hve --csv C:\ForensicDataset\bcwipe --csvf amcache.csv -i
+[17:58:43.756 INF] Console log: C:\ForensicDataset\bcwipe\20261105095843_AmcacheParser_2026.10.1_ConsoleLog.txt
+[17:58:43.758 INF] Amcache data found: registry hive (Amcache.hve)
+[17:58:43.935 WRN] Hive does not contain a Root\InventoryApplication key
+[17:58:44.029 INF] C:\ForensicDataset\bcwipe\_amcache_tmp\Amcache.hve is in new format (registry hive, Root\Inventory* keys)
+[17:58:44.030 INF] Total file entries found: 200
+[17:58:44.032 INF] Found 200 unassociated file entry and 0 program file entries (across 0 program entries)
+[17:58:44.033 INF] Results saved to: C:\ForensicDataset\bcwipe
+[17:58:44.033 INF] Total parsing time: 0.275 seconds

@@ -3,7 +3,7 @@
     Generates a labeled ground-truth forensic dataset for WiperTrace.
 
 .DESCRIPTION
-    Phase 1  Plant a controlled corpus in C:\TargetCorpus and record ground truth.
+    Phase 1  Plant a controlled corpus in D:\corpus (-TargetDir) and record ground truth.
     Phase 2  Run the selected wiper headlessly (start/end UTC recorded).
     Phase 3  Parse $MFT, $J, Prefetch and Amcache with Eric Zimmerman tools.
     Phase 4  Write ground_truth.json (manifest) next to the CSVs.
@@ -18,12 +18,17 @@
 .EXAMPLE
     .\Generate-WiperDataset.ps1 -Scenario bcwipe   -ToolsDir C:\Tools\EZ
     .\Generate-WiperDataset.ps1 -Scenario ccleaner -ToolsDir C:\Tools\EZ -FileCount 20
+    # Any other tool (custom scenario name):
+    .\Generate-WiperDataset.ps1 -Scenario mytool -ToolsDir C:\Tools\EZ `
+        -WiperPath 'C:\Tools\mytool.exe' -WiperArgs '--shred "{TARGET}"' -StrictWipeCheck
 #>
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
+    # Label + output folder name. Built-in profiles: bcwipe, ccleaner, sdelete, eraser, bleachbit,
+    # normal_delete. Any other name is a custom tool: supply -WiperPath and -WiperArgs.
     [Parameter(Mandatory)]
-    [ValidateSet('bcwipe', 'ccleaner', 'sdelete', 'eraser', 'bleachbit', 'normal_delete')]
+    [ValidatePattern('^[A-Za-z0-9_.-]+$')]
     [string]$Scenario,
 
     [ValidateRange(1, 10000)]
@@ -34,16 +39,22 @@ param(
     [Parameter(Mandatory)]
     [string]$ToolsDir,
 
-    # Wiper locations (auto-detected in Program Files / PATH when omitted)
-    [string]$BCWipePath,
-    [string]$CCleanerPath,
-    [string]$SDeletePath,
-    [string]$EraserPath,
-    [string]$BleachBitPath,
+    # Wiper executable. Optional for built-in profiles (auto-detected in Program Files / PATH).
+    [string]$WiperPath,
 
-    # BCWipe CLI args placed before the target path. Documented syntax:
-    #   BCWipe Delete [-Mode] [-Options] <files>   (Mode UD1 = 1 pass; the 21-day trial only allows 1 pass)
-    [string]$BCWipeArgs = 'Delete -UD1',
+    # Override/define the command line(s). One string per step, run in order.
+    # Tokens: {TARGET} = target folder, {DRIVE} = target drive (e.g. D:).
+    # Example: -WiperArgs 'Delete -UD1 "{TARGET}\*.*"'
+    [string[]]$WiperArgs,
+
+    # Exit codes treated as success for -WiperArgs steps.
+    [int[]]$WiperOkExitCodes = @(0, 1),
+
+    # Process names to wait on after the command returns (for tools that hand off to a worker).
+    [string[]]$WaitProcess = @(),
+
+    # Max minutes to wait for the corpus files to disappear after the wiper returns.
+    [int]$WipeTimeoutMinutes = 5,
 
     # Corpus folder (recreated every run). Must be on an NTFS volume.
     [string]$TargetDir = 'D:\corpus',
@@ -94,10 +105,12 @@ function Invoke-Exe {
     Write-Info "$([IO.Path]::GetFileName($Exe)) $Arguments"
     $p = Start-Process -FilePath $Exe -ArgumentList $Arguments -Wait -PassThru -NoNewWindow `
         -RedirectStandardOutput $log -RedirectStandardError "$log.err"
-    if ($OkCodes -notcontains $p.ExitCode) {
-        throw "$([IO.Path]::GetFileName($Exe)) exited with code $($p.ExitCode). See $log"
+    # GUI-subsystem exes (e.g. BCWipe.exe) can report no exit code; treat that as 0.
+    $code = if ($null -eq $p.ExitCode) { 0 } else { [int]$p.ExitCode }
+    if ($OkCodes -notcontains $code) {
+        throw "$([IO.Path]::GetFileName($Exe)) exited with code $code. See $log"
     }
-    return $p.ExitCode
+    return $code
 }
 
 # ---------------------------------------------------------------- Preflight
@@ -112,31 +125,77 @@ foreach ($t in 'MFTECmd.exe', 'PECmd.exe', 'AmcacheParser.exe') {
     Write-Ok "$t -> $($p.FullName)"
 }
 
-$pf = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ }
-$wiperExe = $null
-switch ($Scenario) {
-    'bcwipe' {
-        $dirs = $pf | ForEach-Object { Join-Path $_ 'Jetico\BCWipe' }
-        $wiperExe = Find-Tool $BCWipePath @('bcwipe.exe') $dirs
+# ---- Wiper profiles. Add a tool here (or just use -WiperPath/-WiperArgs for a one-off).
+#   Exe   : executable names to look for      Dirs : subfolders of Program Files to search
+#   Steps : @{ Args; Ok } run in order        Wait : process names to wait on afterwards
+#   Pre   : optional scriptblock run before the first step (receives the exe path)
+$Profiles = @{
+    'bcwipe' = @{
+        Exe = @('BCWipe.exe'); Dirs = @('Jetico\BCWipe')
+        # Documented: BCWipe Delete [-Mode] <files>; UD1 = 1 pass (the 21-day trial allows only 1 pass).
+        # \*.* wipes the files but keeps the folder. BCWipe.exe is GUI-subsystem and reports no exit code.
+        Steps = @(@{ Args = 'Delete -UD1 "{TARGET}\*.*"'; Ok = @(0, 1) })
     }
-    'ccleaner' {
-        $dirs = $pf | ForEach-Object { Join-Path $_ 'CCleaner' }
-        $wiperExe = Find-Tool $CCleanerPath @('CCleaner64.exe', 'CCleaner.exe') $dirs
+    'ccleaner' = @{
+        Exe = @('CCleaner64.exe', 'CCleaner.exe'); Dirs = @('CCleaner')
+        Steps = @(@{ Args = '/AUTO'; Ok = @(0, 1) })
+        Wait = @('CCleaner64', 'CCleaner')
+        # /AUTO only runs the saved profile, so register the corpus as a custom Include folder.
+        Pre = {
+            param($Exe)
+            $reg = 'HKCU:\Software\Piriform\CCleaner'
+            if (-not (Test-Path $reg)) { New-Item -Path $reg -Force | Out-Null }
+            Set-ItemProperty -Path $reg -Name '(App)Include1' -Value "PATH|$TargetDir|*.*|RECURSE"
+            Set-ItemProperty -Path $reg -Name '(App)Custom Files' -Value 'True'
+            Set-ItemProperty -Path $reg -Name 'SecureDeleteType' -Value 0 -Type DWord   # 0 = simple overwrite (1 pass)
+            Set-ItemProperty -Path $reg -Name 'WipeFreeSpaceDrives' -Value $TargetDrive -ErrorAction SilentlyContinue
+            $ini = Join-Path (Split-Path $Exe) 'ccleaner.ini'
+            if (Test-Path $ini) {
+                $wipeNotes.Add("Portable ccleaner.ini found at $ini; custom include must be configured there manually.")
+                Write-Warn2 $wipeNotes[-1]
+            }
+        }
     }
-    'sdelete'   { $wiperExe = Find-Tool $SDeletePath @('sdelete64.exe', 'sdelete.exe') @() }
-    'eraser'    {
-        $dirs = $pf | ForEach-Object { Join-Path $_ 'Eraser' }
-        $wiperExe = Find-Tool $EraserPath @('Eraser.exe') $dirs
+    'sdelete' = @{
+        Exe = @('sdelete64.exe', 'sdelete.exe'); Dirs = @()
+        Steps = @(@{ Args = '-nobanner -accepteula -p 1 -r -q "{TARGET}\*"'; Ok = @(0) })
     }
-    'bleachbit' {
-        $dirs = $pf | ForEach-Object { Join-Path $_ 'BleachBit' }
-        $wiperExe = Find-Tool $BleachBitPath @('bleachbit_console.exe') $dirs
+    'eraser' = @{
+        Exe = @('Eraser.exe'); Dirs = @('Eraser')
+        Steps = @(
+            @{ Args = 'add --action=erase --target=file --path="{TARGET}\*"'; Ok = @(0) }
+            @{ Args = 'run'; Ok = @(0) }
+        )
     }
+    'bleachbit' = @{
+        Exe = @('bleachbit_console.exe'); Dirs = @('BleachBit')
+        Steps = @(@{ Args = '--shred "{TARGET}"'; Ok = @(0) })
+    }
+    'normal_delete' = @{ Builtin = $true }   # negative control: plain Remove-Item
 }
-if ($Scenario -ne 'normal_delete') {
-    if (-not $wiperExe) { throw "Could not locate wiper executable for '$Scenario'. Pass the matching -*Path parameter." }
+
+$prof = $null
+if ($Profiles.ContainsKey($Scenario)) {
+    $prof = $Profiles[$Scenario]
+} elseif ($WiperPath -and $WiperArgs) {
+    $prof = @{ Exe = @(); Dirs = @(); Steps = @() }   # custom tool, filled in below
+} else {
+    throw "Unknown scenario '$Scenario'. Built-ins: $(($Profiles.Keys | Sort-Object) -join ', '). For another tool pass -WiperPath and -WiperArgs."
+}
+
+$isBuiltin = $prof.ContainsKey('Builtin')
+$wiperExe  = $null
+$steps     = @()
+if (-not $isBuiltin) {
+    $pf = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ }
+    $dirs = foreach ($d in $prof.Dirs) { foreach ($root in $pf) { Join-Path $root $d } }
+    $wiperExe = Find-Tool $WiperPath $prof.Exe @($dirs | Where-Object { $_ })
+    if (-not $wiperExe) { throw "Could not locate the wiper executable for '$Scenario'. Pass -WiperPath." }
     Write-Ok "Wiper -> $wiperExe"
+    $steps = if ($WiperArgs) { @($WiperArgs | ForEach-Object { @{ Args = $_; Ok = $WiperOkExitCodes } }) } else { @($prof.Steps) }
+    if (-not $steps.Count) { throw "No command line for '$Scenario'. Pass -WiperArgs." }
 }
+$waitProcs = @($WaitProcess) + $(if ($prof.ContainsKey('Wait')) { $prof.Wait } else { @() })
 
 # Target volume must be NTFS and have a USN journal
 if (-not (Test-Path -LiteralPath "$TargetDrive\")) { throw "Target drive $TargetDrive not found. Pass -TargetDir on an existing NTFS volume." }
@@ -271,47 +330,30 @@ $startUtc = [DateTime]::UtcNow
 $wipeNotes = [System.Collections.Generic.List[string]]::new()
 $wipeExit = $null
 
-switch ($Scenario) {
-    'bcwipe' {
-        # \*.* wipes the files but keeps the folder (per BCWipe docs)
-                $wipeExit = Invoke-Exe $wiperExe "$BCWipeArgs `"$TargetDir\*.*`"" 'wiper_bcwipe.log' @(0, 1)
+if ($isBuiltin) {
+    Remove-Item -LiteralPath $TargetDir -Recurse -Force
+    $wipeExit = 0
+} else {
+    if ($prof.ContainsKey('Pre')) { & $prof.Pre $wiperExe }
+    $n = 0
+    foreach ($s in $steps) {
+        $n++
+        $argLine = ([string]$s.Args).Replace('{TARGET}', $TargetDir).Replace('{DRIVE}', $TargetDrive)
+        $wipeExit = Invoke-Exe $wiperExe $argLine "wiper_${Scenario}_step$n.log" @($s.Ok)
     }
-    'ccleaner' {
-        # CCleaner /AUTO only runs the saved cleaning configuration, so register the
-        # corpus as a custom "Include" folder (CCleaner -> Custom Files and Folders)
-        # in both the registry and the portable INI location before running.
-        $regPath = 'HKCU:\Software\Piriform\CCleaner'
-        if (-not (Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
-        $inc = "PATH|$TargetDir|*.*|RECURSE"
-        Set-ItemProperty -Path $regPath -Name '(App)Include1' -Value $inc
-        Set-ItemProperty -Path $regPath -Name '(App)Custom Files' -Value 'True'
-        Set-ItemProperty -Path $regPath -Name 'SecureDeleteType' -Value 0 -Type DWord   # 0 = simple overwrite (1 pass)
-        Set-ItemProperty -Path $regPath -Name 'WipeFreeSpaceDrives' -Value $TargetDrive -ErrorAction SilentlyContinue
-        $ini = Join-Path (Split-Path $wiperExe) 'ccleaner.ini'
-        if (Test-Path $ini) {
-            $wipeNotes.Add("Portable ccleaner.ini found at $ini; custom include must be configured there manually.")
-            Write-Warn2 $wipeNotes[-1]
-        }
-        $wipeExit = Invoke-Exe $wiperExe '/AUTO' 'wiper_ccleaner.log' @(0, 1)
-        # /AUTO may return before the worker finishes; wait for it to exit.
+    if ($waitProcs.Count) {
         $deadline = (Get-Date).AddMinutes(10)
-        while ((Get-Process -Name 'CCleaner64', 'CCleaner' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+        while ((Get-Process -Name $waitProcs -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
             Start-Sleep -Seconds 2
         }
     }
-    'sdelete' {
-        $wipeExit = Invoke-Exe $wiperExe "-nobanner -accepteula -p 1 -r -q `"$TargetDir\*`"" 'wiper_sdelete.log' @(0)
-    }
-    'eraser' {
-        $wipeExit = Invoke-Exe $wiperExe "add --action=erase --target=file --path=`"$TargetDir\*`"" 'wiper_eraser_add.log' @(0)
-        Invoke-Exe $wiperExe 'run' 'wiper_eraser_run.log' @(0) | Out-Null
-    }
-    'bleachbit' {
-        $wipeExit = Invoke-Exe $wiperExe "--shred `"$TargetDir`"" 'wiper_bleachbit.log' @(0)
-    }
-    'normal_delete' {
-        Remove-Item -LiteralPath $TargetDir -Recurse -Force
-        $wipeExit = 0
+}
+
+# Some wipers return before finishing (GUI/service hand-off): wait for the files to disappear.
+if (-not $isBuiltin) {
+    $deadline = (Get-Date).AddMinutes($WipeTimeoutMinutes)
+    while ((Get-Date) -lt $deadline -and @($truth | Where-Object { Test-Path -LiteralPath $_.path }).Count -gt 0) {
+        Start-Sleep -Seconds 2
     }
 }
 
