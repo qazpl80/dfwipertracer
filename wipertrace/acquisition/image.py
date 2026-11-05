@@ -152,7 +152,10 @@ def extract_artifacts(image: Path, out_dir: Path, volume_index: int = 0) -> dict
                 if _copy_stream(fs, f"/Windows/Prefetch/{name}", dest):
                     record("prefetch", dest)
     except OSError:
-        log.warning("Prefetch folder not found (disabled, or not a system volume?)")
+        others = [str(i) for i in range(len(vols)) if i != volume_index]
+        hint = f" Image has {len(vols)} NTFS volumes; try --volume {' / '.join(others)}." if others else ""
+        log.warning("Prefetch folder not found on NTFS volume %d (disabled, or not the Windows volume?).%s",
+                    volume_index, hint)
 
     manifest = {
         "image": str(image),

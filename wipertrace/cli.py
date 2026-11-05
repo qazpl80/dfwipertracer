@@ -23,8 +23,9 @@ def _add_analyze(sub) -> None:
     p = sub.add_parser("analyze", help="attribute wiping activity from parser CSVs")
     p.add_argument("case_dir", nargs="?", type=Path, help="directory containing parser CSV outputs")
     for a in ARTIFACTS:
-        p.add_argument(f"--{a}", type=Path, action="append", metavar="CSV",
-                       help=f"explicit {a} CSV (overrides discovery; repeatable)")
+        # nargs="+" lets a PowerShell glob such as (Get-ChildItem *FileEntries*.csv) pass several files.
+        p.add_argument(f"--{a}", type=Path, action="extend", nargs="+", metavar="CSV",
+                       help=f"explicit {a} CSV(s) (overrides discovery; repeatable)")
     p.add_argument("--drop", choices=ARTIFACTS, action="append", default=[],
                    help="ignore an artifact class (ablation / robustness testing)")
     p.add_argument("--signatures", type=Path, help="signature DB YAML (default: bundled)")
@@ -99,6 +100,16 @@ def cmd_analyze(args) -> int:
 def cmd_collect(args) -> int:
     from wipertrace.acquisition.eztools import run_eztools
     from wipertrace.acquisition.image import extract_artifacts
+
+    # Fail before the (slow) extraction, and name the bad path instead of a bare WinError 2.
+    for opt in ("mftecmd", "pecmd", "amcacheparser"):
+        tool = getattr(args, opt)
+        if tool is not None and not tool.is_file():
+            print(f"error: --{opt} {tool} does not exist", file=sys.stderr)
+            return EXIT_ERROR
+    if not args.image.is_file():
+        print(f"error: image {args.image} does not exist", file=sys.stderr)
+        return EXIT_ERROR
 
     manifest = extract_artifacts(args.image, args.out, args.volume)
     print(f"extracted {len(manifest['files'])} file(s) to {args.out / 'raw'}")
