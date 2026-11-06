@@ -257,6 +257,65 @@ def eraser(b: CaseBuilder, files, hard: bool):
         b.mft(e, current, 0, in_use=False, ts=EPOCH_1601, fn_ts=EPOCH_1601)
 
 
+def ccleaner(b: CaseBuilder, files, hard: bool):
+    """Custom-file secure deletion (1 pass): overwrite, one rename to Z's, delete."""
+    b.prefetch("CCLEANER64.EXE", [b.t + timedelta(seconds=6)])
+    for e, name, size in files:
+        base, ext = _split(name)
+        new = "Z" * len(base) + (f".{'Z' * len(ext)}" if ext else "")
+        b.usn(name, e, "DataOverwrite")
+        b.usn(name, e, "DataOverwrite|Close")
+        b.usn(name, e, "BasicInfoChange|Close")
+        b.usn(name, e, "RenameOldName")
+        b.usn(new, e, "RenameNewName")
+        b.usn(new, e, "RenameNewName|Close")
+        b.usn(new, e, "FileDelete|Close")   # present after a hard shutdown too
+        b.log(e, "UpdateResidentValue", "UpdateResidentValue")
+        b.mft(e, new, -(-size // 512) * 512, in_use=False)   # size kept, rounded up to 512
+
+
+def bcwipe(b: CaseBuilder, files, hard: bool):
+    """BCWipe Delete: rename, wipe data and an alternate data stream, truncate, delete;
+    then wipe $LogFile through ~BCWipe.tmp\\LOGFILEWIPER."""
+    run = b.t + timedelta(seconds=5)
+    b.prefetch("BCWIPE.EXE", [run])
+    b.prefetch("BCWIPETM.EXE", [run - timedelta(seconds=60)])
+    # BCWipe sets the four $SI times to 1601 + 4096..32768 ticks; $FILE_NAME keeps real times
+    si = "1601-01-01 00:00:00.0032768"
+    for e, name, size in files:
+        base, ext = _split(name)
+        if len(base) <= 8 and len(ext) <= 3:      # 8.3-compatible name -> random 8.3 name
+            new = "".join(b.rng.choice(string.ascii_lowercase) for _ in range(8)) + "." + \
+                "".join(b.rng.choice(string.ascii_lowercase) for _ in range(3))
+        else:                                    # otherwise same length, letters only
+            new = "".join(b.rng.choice(string.ascii_lowercase) for _ in range(len(name)))
+        b.usn(name, e, "RenameOldName")
+        b.usn(new, e, "RenameNewName")
+        b.usn(new, e, "RenameNewName|Close")
+        b.usn(new, e, "IndexableChange|BasicInfoChange")
+        b.usn(new, e, "StreamChange")
+        b.usn(new, e, "NamedDataExtend|StreamChange")
+        b.usn(new, e, "NamedDataExtend|StreamChange|Close")
+        b.usn(new, e, "DataOverwrite|DataExtend")
+        b.usn(new, e, "DataOverwrite|DataExtend|Close")
+        b.usn(new, e, "DataTruncation")
+        b.usn(new, e, "DataTruncation|BasicInfoChange|Close")
+        b.usn(new, e, "FileDelete|Close")
+        b.mft(e, new, 0, in_use=False, ts=si, fn_ts=_ts(b.t))
+    d = b.new_entry()
+    b.usn("~BCWipe.tmp", d, "FileCreate", parent_path=".", attrs="Directory")
+    b.usn("~BCWipe.tmp", d, "FileCreate|Close", parent_path=".", attrs="Directory")
+    lw = b.new_entry()
+    b.usn("LOGFILEWIPER", lw, "FileCreate", parent=d, parent_path=".\\~BCWipe.tmp")
+    b.usn("LOGFILEWIPER", lw, "DataExtend|DataTruncation|FileCreate|FileDelete|Close",
+          parent=d, parent_path=".\\~BCWipe.tmp")
+    for _ in range(1500):                      # the log is flooded by updates to one folder
+        b.log(d, "UpdateFileNameRoot", "UpdateFileNameRoot")
+    b.usn("~BCWipe.tmp", d, "FileDelete|Close", parent_path=".", attrs="Directory")
+    b.mft(d, "~BCWipe.tmp", 0, in_use=False, parent_path=".", is_dir=True, ts=si, fn_ts=_ts(b.t))
+    b.mft(lw, "LOGFILEWIPER", 0, in_use=False, parent_path=".\\~BCWipe.tmp", ts=si, fn_ts=_ts(b.t))
+
+
 def explorer_delete(b: CaseBuilder, files, hard: bool):
     for e, name, size in files:  # recycle, then empty the Recycle Bin
         ext = _split(name)[1]
@@ -289,6 +348,8 @@ SCENARIOS = {
     "bleachbit6": ("bleachbit6", bleachbit6),
     "bleachbit4": ("bleachbit4", bleachbit4),
     "eraser": ("eraser", eraser),
+    "ccleaner": ("ccleaner", ccleaner),
+    "bcwipe": ("bcwipe", bcwipe),
     "explorer_delete": (None, explorer_delete),
     "rename_churn": (None, rename_churn),
 }

@@ -1,7 +1,8 @@
 """$MFT extractor (MFTECmd CSV).
 
 One MFT_RECORD event per row, with derived attributes that signature rules use:
-  name_len, size, in_use, parent_path, all_si_ts_1601, any_ts_1601, ts (dict)
+  name_len, size, in_use, parent_path, all_si_ts_1601, all_fn_ts_1601, all_ts_1601,
+  any_ts_1601, ts (dict)
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ class MftExtractor(Extractor):
     def parse_row(self, row: dict[str, str], origin: Origin) -> Iterable[Event]:
         ts = {f: self.col(row, f) for f in SI_FIELDS + FN_FIELDS}
         si_present = [v for k, v in ts.items() if k.startswith("si_") and v]
+        fn_present = [v for k, v in ts.items() if k.startswith("fn_") and v]
         all_present = [v for v in ts.values() if v]
         name = self.col(row, "name")
         yield Event(
@@ -39,8 +41,10 @@ class MftExtractor(Extractor):
                 "is_directory": to_bool(self.col(row, "is_directory")),
                 "size": to_int(self.col(row, "size")),
                 "ts": ts,
-                # Eraser resets every timestamp to FILETIME 0 (1601-01-01).
+                # Eraser sets timestamps to 1601-01-01 (FILETIME ~0); NTFS still rewrites $SI LastRecordChange.
                 "all_si_ts_1601": bool(si_present) and all(v.startswith("1601") for v in si_present),
+                # Eraser's 1601 times reach $FILE_NAME too; BCWipe sets only $STANDARD_INFORMATION.
+                "all_fn_ts_1601": bool(fn_present) and all(v.startswith("1601") for v in fn_present),
                 "all_ts_1601": bool(all_present) and all(v.startswith("1601") for v in all_present),
                 "any_ts_1601": any(v.startswith("1601") for v in all_present),
             },

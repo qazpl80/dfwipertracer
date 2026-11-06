@@ -14,8 +14,8 @@
 # references listed per tool.
 
 schema_version: 1
-db_version: "0.1.0"
-derived_from: "Controlled lab runs, one build per tool; Windows 10/11 NTFS"
+db_version: "0.2.0"
+derived_from: "Controlled lab runs, one build per tool; Windows 10/11 NTFS (72 harness runs, 6 Nov 2026)"
 
 tools:
   sdelete:
@@ -43,6 +43,18 @@ tools:
     references:
       - "Horsman, Digital tool marks (DTMs): A forensic analysis of file wiping software, AJFS 2021"
       - "Zareen, Aslam & Akhlaq, Criteria for validating secure wiping tools, IFIP DF 2015"
+  ccleaner:
+    display_name: CCleaner (secure file deletion)
+    versions_observed: ["6.x classic (ccsetup.exe)"]
+    notes: >-
+      Custom Files with Secure Deletion on (1 pass). Ordinary deletion (the default)
+      leaves only an ordinary delete in the journals; then only Prefetch shows it ran.
+  bcwipe:
+    display_name: Jetico BCWipe
+    versions_observed: ["7.60 (trial)"]
+    notes: >-
+      Wipes the file's alternate data stream as well as its data, and floods
+      $LogFile through a LOGFILEWIPER file under ~BCWipe.tmp.
 
 rules:
   # ------------------------------------------------------------------ SDelete
@@ -185,7 +197,9 @@ rules:
       min_renames: 1
       max_renames: 1
       same_length_as_original: true
-      exclude_name_regex: '^\$[RI][A-Z0-9]{6}'   # Recycle Bin
+      # Recycle Bin $R/$I names; one repeated letter (CCleaner's ZZZZZZ.ZZZ); letters
+      # only (BCWipe). BleachBit 6 names mix digits and punctuation (e.g. "4)3#0_=+t&").
+      exclude_name_regex: '^\$[RI][A-Z0-9]{6}|^([A-Za-z])\1*(\.\1+)?$|^[a-z]+(\.[a-z]+)?$'
       min_files: 3                               # resist incidental user renames
 
   - id: BB6-MFT-001
@@ -306,17 +320,21 @@ rules:
       source: usnjrnl
       counts:
         BasicInfoChange: [12, 20]
+      min_files: 3          # one busy file (e.g. BCWipe's temp file) is not Eraser
 
   - id: ERA-MFT-001
     tool: eraser
-    description: "Size 0 with every timestamp set to 1601-01-01"
+    description: "Size 0 with $FILE_NAME timestamps set to 1601-01-01"
     requires: [mft]
     weight: 3
     kind: match
     params:
       sources: [mft]
       where:
-        all_ts_1601: true
+        # $FN, not "all": on real volumes NTFS rewrites $SI LastRecordChange after
+        # Eraser's SetFileTime, so 7 of 8 timestamps are 1601. BCWipe sets only the
+        # four $SI times, so requiring $FN keeps the two apart.
+        all_fn_ts_1601: true
         size: 0
 
   - id: ERA-LOG-001
@@ -349,4 +367,154 @@ rules:
     kind: correlate
     params:
       rules: [ERA-USN-001, ERA-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ CCleaner
+  # Derived from 6 harness runs (0061-0066, clean + hard shutdown, 40 files each).
+  - id: CCL-USN-001
+    tool: ccleaner
+    description: "One rename per file to a same-length name of Z's (ZZZZZZ.ZZZ) before deletion"
+    requires: [usnjrnl]
+    weight: 4
+    kind: rename_chain
+    params:
+      min_renames: 1
+      max_renames: 1         # SDelete also reaches ZZZZZZ.ZZZ, but after 25 other letters
+      name_regex: '^Z+(\.Z+)?$'
+      same_length_as_original: true
+      min_files: 3
+
+  - id: CCL-MFT-001
+    tool: ccleaner
+    description: "Deleted records still named ZZZZZZ.ZZZ (size kept, rounded up to 512 bytes)"
+    requires: [mft]
+    weight: 2
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        in_use: false
+        is_directory: false
+        name: {regex: '^Z+(\.Z+)?$'}
+        name_len: {range: [3, null]}   # BleachBit 4 can leave a 1-char "Z"
+      min_count: 3
+
+  - id: CCL-PF-001
+    tool: ccleaner
+    description: "CCleaner execution (also runs for ordinary, non-secure cleaning)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^CCLEANER(64)?\.EXE$'}
+
+  - id: CCL-COR-001
+    tool: ccleaner
+    description: "Z-name renames within 15 min of a CCleaner run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [CCL-USN-001, CCL-PF-001]
+      window_seconds: 900
+
+  # ------------------------------------------------------------------ BCWipe
+  # Derived from 6 harness runs (0067-0072) and checked against a separate
+  # MFTECmd case collected with Generate-WiperDataset.ps1.
+  - id: BCW-USN-001
+    tool: bcwipe
+    description: "Per file: rename, alternate data stream written (NamedDataExtend), data truncated"
+    requires: [usnjrnl]
+    weight: 4
+    kind: per_file_count
+    params:
+      source: usnjrnl
+      counts:
+        NamedDataExtend: [1, null]
+        DataTruncation: [1, null]
+        RenameNewName: [1, null]
+      min_files: 3
+
+  - id: BCW-USN-002
+    tool: bcwipe
+    description: "~BCWipe.tmp folder and LOGFILEWIPER file created (log wiping)"
+    requires: [usnjrnl]
+    weight: 3
+    kind: match
+    params:
+      sources: [usnjrnl]
+      ops: [FileCreate]
+      where:
+        name: {iregex: '^(~BCWipe\.tmp|LOGFILEWIPER)$'}
+
+  - id: BCW-USN-003
+    tool: bcwipe
+    description: "Random lower-case rename (8.3 style for short names, e.g. poqiowpb.qvu)"
+    requires: [usnjrnl]
+    weight: 2
+    kind: rename_chain
+    params:
+      min_renames: 1
+      max_renames: 3
+      name_regex: '^[a-z]+(\.[a-z]{3})?$'
+      min_regex_matches: 1
+      min_files: 3
+
+  - id: BCW-MFT-001
+    tool: bcwipe
+    description: "~BCWipe.tmp / LOGFILEWIPER records in $MFT"
+    requires: [mft]
+    weight: 2
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        name: {iregex: '^(~BCWipe\.tmp|LOGFILEWIPER)$'}
+
+  - id: BCW-MFT-002
+    tool: bcwipe
+    description: "Deleted records with all four $SI times set to 1601 but $FILE_NAME times kept"
+    requires: [mft]
+    weight: 3
+    kind: match
+    params:
+      sources: [mft]
+      where:
+        in_use: false
+        size: 0
+        all_si_ts_1601: true      # BCWipe writes 1601 + 4096/8192/16384/32768 ticks
+        all_fn_ts_1601: false     # Eraser's 1601 times reach $FILE_NAME as well
+      min_count: 3
+
+  - id: BCW-LOG-001
+    tool: bcwipe
+    description: "$LogFile flooded: thousands of UpdateFileNameRoot on one folder (~BCWipe.tmp)"
+    requires: [logfile]
+    weight: 2
+    calibrated: false   # measured with an approximate $LogFile parser (10k-20k vs <= 49 for other tools)
+    kind: per_file_count
+    params:
+      source: logfile
+      counts:
+        UpdateFileNameRoot: [1000, null]
+
+  - id: BCW-PF-001
+    tool: bcwipe
+    description: "BCWipe execution (Prefetch) or presence (Amcache)"
+    requires: ["prefetch|amcache"]
+    weight: 2
+    kind: match
+    params:
+      sources: [prefetch, amcache]
+      where:
+        name: {iregex: '^BCWIPE(TM|SVC)?\.EXE$'}
+
+  - id: BCW-COR-001
+    tool: bcwipe
+    description: "Stream-wipe pattern within 15 min of a BCWipe run"
+    weight: 1.5
+    kind: correlate
+    params:
+      rules: [BCW-USN-001, BCW-PF-001]
       window_seconds: 900

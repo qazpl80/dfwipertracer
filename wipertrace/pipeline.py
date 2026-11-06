@@ -23,6 +23,8 @@ STATIC_LIMITATIONS = [
     "Overwrite settings (e.g. SDelete -p1 vs -p3, Eraser Gutmann vs pseudorandom) are "
     "indistinguishable in metadata; attribution is at tool level only.",
     "Amcache is populated by a scheduled inventory task and is unreliable for short runs.",
+    "CCleaner also runs for ordinary (non-secure) cleaning: a CCleaner verdict resting only "
+    "on Prefetch/Amcache (CCL-PF-001) shows that it ran, not that it securely deleted files.",
     "Signatures were derived in a lab from one build per tool on Windows NTFS; other "
     "versions may behave differently.",
 ]

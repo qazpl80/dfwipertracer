@@ -2,7 +2,7 @@
 
 import pytest
 
-TOOLS = ["sdelete", "cipher", "bleachbit6", "bleachbit4", "eraser"]
+TOOLS = ["sdelete", "cipher", "bleachbit6", "bleachbit4", "eraser", "ccleaner", "bcwipe"]
 
 
 @pytest.mark.parametrize("tool", TOOLS)
@@ -63,3 +63,55 @@ def test_evidence_points_back_to_csv_rows(run_case):
     assert usn.evidence and all(e["csv"] and e["row"] >= 1 for e in usn.evidence)
     cor = next(x for x in r.rule_results if x.rule_id == "SDEL-COR-001")
     assert cor.status == "matched" and cor.evidence[0]["gap_seconds"] <= 900
+
+
+@pytest.mark.parametrize("tool", TOOLS)
+def test_no_other_tool_is_listed(run_case, tool):
+    """A clean attribution: no second tool reaches the detection threshold."""
+    r = run_case(tool)
+    assert r.conclusion["tools"] == [tool], r.conclusion
+
+
+def test_ccleaner_is_not_taken_for_sdelete_or_bleachbit6(run_case):
+    """CCleaner's ZZZZZZ.ZZZ is SDelete's last letter name, and it is one same-length
+    rename like BleachBit 6; neither rule may fire on it."""
+    r = run_case("ccleaner")
+    by_id = {x.rule_id: x.status for x in r.rule_results}
+    assert by_id["SDEL-USN-001"] == "not_matched"
+    assert by_id["BB6-USN-001"] == "not_matched"
+
+
+def test_bcwipe_is_not_taken_for_eraser(run_case):
+    """Both tools leave 1601 timestamps; only Eraser's reach $FILE_NAME."""
+    r = run_case("bcwipe")
+    by_id = {x.rule_id: x.status for x in r.rule_results}
+    assert by_id["ERA-MFT-001"] == "not_matched"
+    assert by_id["BCW-MFT-002"] == "matched"
+
+
+def test_ccleaner_prefetch_alone_is_low_confidence(run_case):
+    """CCleaner also runs for ordinary cleaning: with only Prefetch the verdict rests on
+    one rule, and the report must say so."""
+    r = run_case("ccleaner", drop=["usnjrnl", "mft", "logfile"])
+    top = r.verdicts[0]
+    assert top.tool == "ccleaner" and top.coverage < 0.5 and top.label == "low"
+    assert any("CCleaner" in lim for lim in r.limitations)
+
+
+def test_ccleaner_ordinary_delete_is_not_a_wipe(tmp_path):
+    """CCleaner ran but deleted normally (secure deletion off): journals present, so
+    no wiper is indicated even though CCLEANER64.EXE is in Prefetch."""
+    from wipertrace.case import Case
+    from wipertrace.pipeline import analyze
+    from wipertrace.testing.synth import CaseBuilder
+
+    b = CaseBuilder(3)
+    b.background()
+    files = b.corpus(10)
+    b.prefetch("CCLEANER64.EXE", [b.t])
+    for e, name, size in files:
+        b.usn(name, e, "FileDelete|Close")
+        b.mft(e, name, size, in_use=False)
+    b.write(tmp_path / "c", "ccleaner_ordinary", {"expected_tool": None})
+    r = analyze(Case.discover(tmp_path / "c"))
+    assert r.conclusion["status"] == "no_wiper_indicated", r.conclusion

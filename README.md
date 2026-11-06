@@ -7,8 +7,8 @@ Amcache), scores the evidence against a database of per-tool signatures, and
 reports a ranked, confidence-scored attribution with the CSV row behind every
 conclusion.
 
-Supported tools (signature DB 0.1.0): SDelete 2.05, cipher /w, BleachBit 6.x,
-BleachBit 4.x, Eraser 6.2. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+Supported tools (signature DB 0.2.0): SDelete 2.05, cipher /w, BleachBit 6.x,
+BleachBit 4.x, Eraser 6.2, CCleaner (secure file deletion), BCWipe 7.60. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 for the design.
 
 **Contents:** [Install](#install) · [Quick start](#quick-start-no-evidence-needed) ·
@@ -74,7 +74,7 @@ wipertrace analyze demo_case --out demo_report   # -> wipertrace_report.json + .
 
 Expected: `ATTRIBUTED: Attributed to Sysinternals SDelete ... confidence 1.00`.
 
-Scenarios: `sdelete`, `cipher`, `bleachbit6`, `bleachbit4`, `eraser`, and the
+Scenarios: `sdelete`, `cipher`, `bleachbit6`, `bleachbit4`, `eraser`, `ccleaner`, `bcwipe`, and the
 negative controls `explorer_delete`, `rename_churn`. Add `--hard-shutdown` to
 simulate a power cut before the final journal records.
 
@@ -446,6 +446,26 @@ attribution under clean and hard shutdown, and runs ablations (journal lost,
 Prefetch only, no artifacts). Synthetic cases verify the software's logic;
 measure detection accuracy on real acquisitions.
 
+### Validating against the lab runs
+
+`scripts/` turns the wipertrace-vmware harness runs (72 runs: 7 tools and 2
+controls, clean and hard shutdown) into case folders and scores the program on
+all of them:
+
+```powershell
+pip install dissect.util                       # Prefetch decompression
+python scripts\harness_to_case.py "raw data" cases --all
+python scripts\evaluate_cases.py cases                  # all artifacts
+python scripts\evaluate_cases.py cases --drop usnjrnl   # journal lost
+```
+
+`harness_to_case.py` writes the $J, $MFT and Prefetch CSVs in MFTECmd / PECmd
+layout. Its $LogFile CSV approximates LogFileParser (MFT references from the
+target VCN, names from index entries), so treat `*-LOG-*` results from it as
+indicative. With signature DB 0.2.0 all 72 runs are classified correctly with
+no second tool listed; with $UsnJrnl dropped, 66/72 (the six BleachBit 4 runs
+become *ambiguous* with BleachBit 6).
+
 ## Limitations
 
 WiperTrace cannot attribute full-disk offline wipers (e.g. DBAN), can be
@@ -457,4 +477,8 @@ On real system volumes, some BleachBit 6.x and Eraser journal and $MFT rules
 also match routine Windows activity (log rotation, temp-file renames, deleted
 ETW logs), so those tools can appear as *"also consistent"* without having
 run. Weigh any tool whose execution rule (`*-PF-*`) did not match accordingly.
+
+CCleaner runs for ordinary cleaning as well as secure deletion. If secure
+deletion was off, its journals show an ordinary delete and only `CCL-PF-001`
+matches: that shows CCleaner ran, not that it wiped anything.
 The synthetic test cases contain no such background activity.

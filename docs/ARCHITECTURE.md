@@ -184,7 +184,9 @@ NTFS, one build per tool).
 | cipher /w | EFSTMPWP fill directory; hundreds of bitmap operations per fill file | `CIPH-USN-001`, `CIPH-MFT-001`, `CIPH-LOG-001` |
 | BleachBit 6.x | One same-length random rename per file; size truncated to 0 | `BB6-USN-001`, `BB6-MFT-001` |
 | BleachBit 4.x | ~226-char rename, then 1-char rename; record overflow in $LogFile | `BB4-USN-001`, `BB4-MFT-001`, `BB4-LOG-001` |
-| Eraser 6.2 | 7 random renames, ~16 BASIC_INFO_CHANGE, all timestamps set to 1601-01-01 | `ERA-USN-001`, `ERA-USN-002`, `ERA-MFT-001`, `ERA-LOG-001` |
+| Eraser 6.2 | 7 random renames, ~16 BASIC_INFO_CHANGE, timestamps set to 1601-01-01 (the $FILE_NAME ones too; NTFS rewrites $SI LastRecordChange) | `ERA-USN-001`, `ERA-USN-002`, `ERA-MFT-001`, `ERA-LOG-001` |
+| CCleaner (secure deletion, 1 pass) | One rename per file to a same-length all-Z name (`ZZZZZZ.ZZZ`), overwrite, delete; Z name left in $MFT, size kept (rounded up to 512 bytes) | `CCL-USN-001`, `CCL-MFT-001` |
+| BCWipe 7.60 | Rename to a random lower-case name (8.3 style for 8.3 names, else same length); data **and** an alternate data stream wiped (NamedDataExtend), truncated, deleted; $SI times set to 1601 (+4096..32768 ticks), $FN kept; `~BCWipe.tmp\LOGFILEWIPER` floods $LogFile | `BCW-USN-001..003`, `BCW-MFT-001`, `BCW-MFT-002`, `BCW-LOG-001` |
 | All | Executable name in Prefetch / Amcache | `*-PF-001` (`requires: [prefetch|amcache]`) |
 | All | Journal activity within 15 min of the tool's execution | `*-COR-001` |
 
@@ -195,6 +197,11 @@ Design decisions that follow from these behaviours:
 * **Amcache is never required.** It is populated by a scheduled inventory task
   and often lacks entries for short-lived executions, so it is only ever an
   alternative to Prefetch.
+* **Look-alike names are separated by count and character set.** CCleaner's
+  `ZZZZZZ.ZZZ` is also SDelete's 26th name, but CCleaner renames once
+  (`max_renames: 1`). BleachBit 6's same-length names mix digits and
+  punctuation, so `BB6-USN-001` excludes names of one repeated letter
+  (CCleaner) and letters-only names (BCWipe).
 * **BleachBit versions share an executable name.** With Prefetch alone the two
   versions are reported as `ambiguous`; journal rules separate them.
 * **Provisional rules.** Rules whose thresholds come from qualitative
@@ -224,6 +231,9 @@ Design decisions that follow from these behaviours:
 * `$LogFile` column defaults match LogFileParser output (`lf_RedoOperation`,
   `lf_MFTReference`, …); other parsers need a column mapping.
 * BleachBit 4.x and 6.x cannot be separated from Prefetch executable names alone.
-* CCleaner and BCWipe are not in the bundled database.
+* CCleaner is only attributable when secure deletion was on; its execution
+  alone (`CCL-PF-001`) does not show a wipe.
+* `BCW-LOG-001` (UpdateFileNameRoot flood) was measured with an approximate
+  $LogFile parser (`scripts/harness_to_case.py`) and is marked provisional.
 * Full-disk offline wipers (e.g. DBAN) leave no live-OS artifacts and are out of
   scope; tools that corrupt NTFS metadata files can defeat journal-based rules.

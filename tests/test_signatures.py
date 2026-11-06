@@ -7,7 +7,7 @@ from wipertrace.engine.signatures import SignatureError, load_signatures
 
 def test_default_db_loads_and_validates():
     db = load_signatures()
-    assert set(db.tools) == {"sdelete", "cipher", "bleachbit6", "bleachbit4", "eraser"}
+    assert set(db.tools) == {"sdelete", "cipher", "bleachbit6", "bleachbit4", "eraser", "ccleaner", "bcwipe"}
     ids = [r.id for r in db.rules]
     assert len(ids) == len(set(ids))
     # correlate rules inherit requirements from the rules they reference
