@@ -1,0 +1,31 @@
+{
+  "run_id": "0061_ccleaner_secure1pass_clean_r1",
+  "hypervisor": "VMware Workstation",
+  "started_utc": "2026-11-06T04:11:26.179994+00:00",
+  "matrix": {
+    "index": 61,
+    "tool_id": "ccleaner",
+    "mode": "secure1pass",
+    "shutdown": "clean",
+    "repeat": 1
+  },
+  "stages": {
+    "revert": "ok",
+    "boot": "ok",
+    "guest_vmrun_rc": 0,
+    "guest_verdict": "OK",
+    "retrieve": "ok",
+    "shutdown": "clean",
+    "extract": {
+      "compressed": true,
+      "mft": "$MFT.gz",
+      "logfile": "$LogFile.gz",
+      "usnjrnl": "$J.gz",
+      "usnjrnl_address": "1018-128-3"
+    },
+    "extract_source": "Windows 11 x64-0-000003.vmdk",
+    "flatten_backend": "vmware-vdiskmanager"
+  },
+  "result": "ok",
+  "finished_utc": "2026-11-06T04:16:09.066292+00:00"
+}

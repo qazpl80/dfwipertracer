@@ -1,0 +1,15 @@
+{
+  "display": "BleachBit 4.6.0",
+  "install": "E:\\bleachbit\\bleachbit-4.6.0-setup.exe /allusers /S",
+  "binary": "C:\\Program Files (x86)\\BleachBit\\bleachbit_console.exe",
+  "await_targets_sec": 0,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": "\"C:\\Program Files (x86)\\BleachBit\\bleachbit_console.exe\" --shred \"{target}\"",
+  "once": null,
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 15
+}

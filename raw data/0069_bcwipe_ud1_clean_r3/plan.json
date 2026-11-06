@@ -1,0 +1,15 @@
+{
+  "display": "BCWipe 7.60 (Jetico, trial) - Delete -UD1",
+  "install": "E:\\bcwipe\\bcwipe-setup.exe -S -Z -T -NoPrivacyGuard -NoSwapFile",
+  "binary": "C:\\Program Files (x86)\\Jetico\\BCWipe\\BCWipe.exe",
+  "await_targets_sec": 600,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 90,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": "\"C:\\Program Files (x86)\\Jetico\\BCWipe\\BCWipe.exe\" Delete -UD1 \"{target}\"",
+  "once": null,
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 30
+}

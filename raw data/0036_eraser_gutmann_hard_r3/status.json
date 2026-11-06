@@ -1,0 +1,31 @@
+{
+  "run_id": "0036_eraser_gutmann_hard_r3",
+  "hypervisor": "VMware Workstation",
+  "started_utc": "2026-10-14T05:14:25.465367+00:00",
+  "matrix": {
+    "index": 36,
+    "tool_id": "eraser",
+    "mode": "gutmann",
+    "shutdown": "hard",
+    "repeat": 3
+  },
+  "stages": {
+    "revert": "ok",
+    "boot": "ok",
+    "guest_vmrun_rc": 0,
+    "guest_verdict": "OK",
+    "retrieve": "ok",
+    "shutdown": "hard",
+    "extract": {
+      "compressed": true,
+      "mft": "$MFT.gz",
+      "logfile": "$LogFile.gz",
+      "usnjrnl": "$J.gz",
+      "usnjrnl_address": "1018-128-3"
+    },
+    "extract_source": "Windows 11 x64-0-000001.vmdk",
+    "flatten_backend": "vmware-vdiskmanager"
+  },
+  "result": "ok",
+  "finished_utc": "2026-10-14T05:18:23.022197+00:00"
+}

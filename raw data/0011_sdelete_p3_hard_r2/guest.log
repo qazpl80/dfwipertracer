@@ -1,0 +1,7 @@
+[2026-10-14T11:54:12.7215601+08:00] run=0011_sdelete_p3_hard_r2 tool=sdelete mode=p3 corpus=D:\corpus count=40
+[2026-10-14T11:54:14.1410215+08:00] ground truth recorded for 40 files
+[2026-10-14T11:54:19.3190019+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-10-14T11:54:35.7366015+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T11:54:35.7438289+08:00] 0/40 target paths still exist
+[2026-10-14T11:54:42.3920604+08:00] collected.zip written (2.1 MB)
+[2026-10-14T11:54:42.3967996+08:00] guest side complete

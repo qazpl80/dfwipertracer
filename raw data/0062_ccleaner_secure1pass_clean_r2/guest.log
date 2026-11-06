@@ -1,0 +1,31 @@
+[2026-11-06T12:38:06.3318409+08:00] run=0062_ccleaner_secure1pass_clean_r2 tool=ccleaner mode=secure1pass corpus=D:\corpus count=40
+[2026-11-06T12:38:08.5697208+08:00] ground truth recorded for 40 files
+[2026-11-06T12:38:08.6049035+08:00] installer present: E:\ccleaner\ccsetup.exe
+[2026-11-06T12:38:08.6120041+08:00] installing (timeout 300s): E:\ccleaner\ccsetup.exe /S
+[2026-11-06T12:38:24.8231651+08:00] install returned 0
+[2026-11-06T12:38:24.8433762+08:00] binary present after 0s: C:\Program Files\CCleaner\CCleaner64.exe
+[2026-11-06T12:38:29.8727325+08:00] pre-step: # CCleaner custom-include setup (runs in its own scope).
+& {
+  $reg = 'HKCU:\Software\Piriform\CCleaner'
+  if (-not (Test-Path $reg)) { New-Item -Path $reg -Force | Out-Null }
+  $n = 0
+  Get-ChildItem -LiteralPath 'D:\corpus' -File | Sort-Object Name | Select-Object -First 40 | ForEach-Object {
+    $n++
+    Set-ItemProperty -Path $reg -Name ("Include" + $n) -Value ("FILE|D:\corpus\|" + $_.Name)
+  }
+  Set-ItemProperty -Path $reg -Name '(App)Custom Files' -Value 'True'
+  Set-ItemProperty -Path $reg -Name '(App)Custom Folders' -Value 'True'
+  Set-ItemProperty -Path $reg -Name 'SecureDeleteType' -Value '1' -Type String
+  Set-ItemProperty -Path $reg -Name 'SecureDeleteMethod' -Value '0' -Type String
+  Set-ItemProperty -Path $reg -Name 'UpdateBackgroundCheck' -Value '0' -Type String
+  Set-ItemProperty -Path $reg -Name 'MSG_CONFIRMCLEAN' -Value 'False'
+}
+
+[2026-11-06T12:38:30.0408228+08:00] volume-level command
+[2026-11-06T12:38:59.9015228+08:00] volume-level command returned 0
+[2026-11-06T12:38:59.9282350+08:00] asynchronous tool: waiting up to 600s for targets to disappear
+[2026-11-06T12:38:59.9611087+08:00] all targets gone after 0s
+[2026-11-06T12:39:32.6722597+08:00] collected Prefetch + Amcache via VSS
+[2026-11-06T12:39:32.6815202+08:00] 0/40 target paths still exist
+[2026-11-06T12:39:42.4355555+08:00] collected.zip written (2.3 MB)
+[2026-11-06T12:39:42.4442156+08:00] guest side complete

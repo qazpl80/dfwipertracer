@@ -1,0 +1,13 @@
+[2026-10-14T13:08:24.3660339+08:00] run=0034_eraser_gutmann_hard_r1 tool=eraser mode=gutmann corpus=D:\corpus count=40
+[2026-10-14T13:08:25.8815753+08:00] ground truth recorded for 40 files
+[2026-10-14T13:08:25.9162170+08:00] installer present: E:\eraser\eraser-x64.msi
+[2026-10-14T13:08:25.9224151+08:00] installing (timeout 300s): start "" /wait msiexec /i "E:\eraser\eraser-x64.msi" /qn /norestart
+[2026-10-14T13:08:29.4763761+08:00] install returned 0
+[2026-10-14T13:08:29.4885887+08:00] binary present after 0s: C:\Program Files\Eraser\Eraser.exe
+[2026-10-14T13:09:37.9413881+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-10-14T13:09:37.9603479+08:00] asynchronous tool: waiting up to 900s for targets to disappear
+[2026-10-14T13:09:37.9764903+08:00] all targets gone after 0s
+[2026-10-14T13:10:09.2888876+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T13:10:09.2964912+08:00] 0/40 target paths still exist
+[2026-10-14T13:10:16.4253407+08:00] collected.zip written (2.1 MB)
+[2026-10-14T13:10:16.4298591+08:00] guest side complete

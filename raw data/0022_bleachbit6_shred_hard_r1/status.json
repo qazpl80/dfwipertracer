@@ -1,0 +1,31 @@
+{
+  "run_id": "0022_bleachbit6_shred_hard_r1",
+  "hypervisor": "VMware Workstation",
+  "started_utc": "2026-10-14T04:23:36.872785+00:00",
+  "matrix": {
+    "index": 22,
+    "tool_id": "bleachbit6",
+    "mode": "shred",
+    "shutdown": "hard",
+    "repeat": 1
+  },
+  "stages": {
+    "revert": "ok",
+    "boot": "ok",
+    "guest_vmrun_rc": 0,
+    "guest_verdict": "OK",
+    "retrieve": "ok",
+    "shutdown": "hard",
+    "extract": {
+      "compressed": true,
+      "mft": "$MFT.gz",
+      "logfile": "$LogFile.gz",
+      "usnjrnl": "$J.gz",
+      "usnjrnl_address": "1018-128-3"
+    },
+    "extract_source": "Windows 11 x64-0-000001.vmdk",
+    "flatten_backend": "vmware-vdiskmanager"
+  },
+  "result": "ok",
+  "finished_utc": "2026-10-14T04:26:39.387147+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "display": "Control: ordinary deletion",
+  "install": null,
+  "binary": null,
+  "await_targets_sec": 0,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": null,
+  "once": "Add-Type -AssemblyName Microsoft.VisualBasic\nGet-ChildItem -Path \"{dir}\" -File | Select-Object -First 40 | ForEach-Object {\n  [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile(\n    $_.FullName, 'OnlyErrorDialogs', 'SendToRecycleBin')\n}\nClear-RecycleBin -Force -ErrorAction SilentlyContinue\n",
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 15
+}

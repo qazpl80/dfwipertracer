@@ -1,0 +1,15 @@
+{
+  "display": "CCleaner (ccsetup.exe, classic) - custom-files secure delete",
+  "install": "E:\\ccleaner\\ccsetup.exe /S",
+  "binary": "C:\\Program Files\\CCleaner\\CCleaner64.exe",
+  "await_targets_sec": 600,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 900,
+  "pre": "# CCleaner custom-include setup (runs in its own scope).\n& {\n  $reg = 'HKCU:\\Software\\Piriform\\CCleaner'\n  if (-not (Test-Path $reg)) { New-Item -Path $reg -Force | Out-Null }\n  $n = 0\n  Get-ChildItem -LiteralPath '{dir}' -File | Sort-Object Name | Select-Object -First 40 | ForEach-Object {\n    $n++\n    Set-ItemProperty -Path $reg -Name (\"Include\" + $n) -Value (\"FILE|{dir}\\|\" + $_.Name)\n  }\n  Set-ItemProperty -Path $reg -Name '(App)Custom Files' -Value 'True'\n  Set-ItemProperty -Path $reg -Name '(App)Custom Folders' -Value 'True'\n  Set-ItemProperty -Path $reg -Name 'SecureDeleteType' -Value '1' -Type String\n  Set-ItemProperty -Path $reg -Name 'SecureDeleteMethod' -Value '0' -Type String\n  Set-ItemProperty -Path $reg -Name 'UpdateBackgroundCheck' -Value '0' -Type String\n  Set-ItemProperty -Path $reg -Name 'MSG_CONFIRMCLEAN' -Value 'False'\n}\n",
+  "per_file": null,
+  "once": "\"C:\\Program Files\\CCleaner\\CCleaner64.exe\" /AUTO",
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 30
+}

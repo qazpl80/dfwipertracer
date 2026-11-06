@@ -1,0 +1,8 @@
+[2026-10-14T14:20:32.3738908+08:00] run=0057_control_churn_churn_clean_r3 tool=control_churn mode=churn corpus=D:\corpus count=40
+[2026-10-14T14:20:33.7808451+08:00] ground truth recorded for 40 files
+[2026-10-14T14:20:33.8052272+08:00] volume-level command
+[2026-10-14T14:20:35.1471739+08:00] volume-level command returned 0
+[2026-10-14T14:20:51.4652659+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T14:20:51.4750078+08:00] 40/40 target paths still exist
+[2026-10-14T14:20:56.4843239+08:00] collected.zip written (2 MB)
+[2026-10-14T14:20:56.4893778+08:00] guest side complete

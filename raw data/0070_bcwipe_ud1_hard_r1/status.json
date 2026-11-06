@@ -1,0 +1,31 @@
+{
+  "run_id": "0070_bcwipe_ud1_hard_r1",
+  "hypervisor": "VMware Workstation",
+  "started_utc": "2026-11-06T05:29:34.212056+00:00",
+  "matrix": {
+    "index": 70,
+    "tool_id": "bcwipe",
+    "mode": "ud1",
+    "shutdown": "hard",
+    "repeat": 1
+  },
+  "stages": {
+    "revert": "ok",
+    "boot": "ok",
+    "guest_vmrun_rc": 0,
+    "guest_verdict": "OK",
+    "retrieve": "ok",
+    "shutdown": "hard",
+    "extract": {
+      "compressed": true,
+      "mft": "$MFT.gz",
+      "logfile": "$LogFile.gz",
+      "usnjrnl": "$J.gz",
+      "usnjrnl_address": "1018-128-3"
+    },
+    "extract_source": "Windows 11 x64-0-000002.vmdk",
+    "flatten_backend": "vmware-vdiskmanager"
+  },
+  "result": "ok",
+  "finished_utc": "2026-11-06T05:43:05.310368+00:00"
+}

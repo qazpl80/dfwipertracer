@@ -1,0 +1,13 @@
+[2026-10-14T13:28:24.5811075+08:00] run=0039_eraser_pseudorandom_clean_r3 tool=eraser mode=pseudorandom corpus=D:\corpus count=40
+[2026-10-14T13:28:25.9642704+08:00] ground truth recorded for 40 files
+[2026-10-14T13:28:25.9993547+08:00] installer present: E:\eraser\eraser-x64.msi
+[2026-10-14T13:28:26.0014960+08:00] installing (timeout 300s): start "" /wait msiexec /i "E:\eraser\eraser-x64.msi" /qn /norestart
+[2026-10-14T13:28:29.4593960+08:00] install returned 0
+[2026-10-14T13:28:29.4736506+08:00] binary present after 0s: C:\Program Files\Eraser\Eraser.exe
+[2026-10-14T13:29:37.5802896+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-10-14T13:29:37.5953127+08:00] asynchronous tool: waiting up to 900s for targets to disappear
+[2026-10-14T13:29:37.6162361+08:00] all targets gone after 0s
+[2026-10-14T13:30:08.9281582+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T13:30:08.9363916+08:00] 0/40 target paths still exist
+[2026-10-14T13:30:16.1654597+08:00] collected.zip written (2.1 MB)
+[2026-10-14T13:30:16.1705289+08:00] guest side complete

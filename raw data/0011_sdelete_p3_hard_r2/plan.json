@@ -1,0 +1,15 @@
+{
+  "display": "SDelete 2.05 (Sysinternals)",
+  "install": null,
+  "binary": "E:\\sdelete\\sdelete64.exe",
+  "await_targets_sec": 0,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": "E:\\sdelete\\sdelete64.exe -accepteula -nobanner -p 3 \"{target}\"",
+  "once": null,
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 15
+}

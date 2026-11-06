@@ -1,0 +1,15 @@
+{
+  "display": "Eraser 6.2.0.2996",
+  "install": "start \"\" /wait msiexec /i \"E:\\eraser\\eraser-x64.msi\" /qn /norestart",
+  "binary": "C:\\Program Files\\Eraser\\Eraser.exe",
+  "await_targets_sec": 900,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": "\"C:\\Program Files\\Eraser\\Eraser.exe\" erase /quiet /method=1407fc4e-feff-4375-b4fb-d7efbb7e9922 \"file={target}\"",
+  "once": null,
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 30
+}

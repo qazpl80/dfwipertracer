@@ -1,0 +1,15 @@
+{
+  "display": "Control: ordinary deletion",
+  "install": null,
+  "binary": null,
+  "await_targets_sec": 0,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": "Remove-Item -LiteralPath \"{target}\" -Force",
+  "once": null,
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 15
+}

@@ -1,0 +1,13 @@
+[2026-11-06T13:04:24.2417050+08:00] run=0068_bcwipe_ud1_clean_r2 tool=bcwipe mode=ud1 corpus=D:\corpus count=40
+[2026-11-06T13:04:26.1506729+08:00] ground truth recorded for 40 files
+[2026-11-06T13:04:26.1831982+08:00] installer present: E:\bcwipe\bcwipe-setup.exe
+[2026-11-06T13:04:26.1882395+08:00] installing (timeout 300s): E:\bcwipe\bcwipe-setup.exe -S -Z -T -NoPrivacyGuard -NoSwapFile
+[2026-11-06T13:04:44.4910607+08:00] install returned 0
+[2026-11-06T13:04:44.5036937+08:00] binary present after 0s: C:\Program Files (x86)\Jetico\BCWipe\BCWipe.exe
+[2026-11-06T13:14:42.3806968+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-11-06T13:14:42.4235576+08:00] asynchronous tool: waiting up to 600s for targets to disappear
+[2026-11-06T13:14:42.4654792+08:00] all targets gone after 0s
+[2026-11-06T13:15:14.1401317+08:00] collected Prefetch + Amcache via VSS
+[2026-11-06T13:15:14.1694189+08:00] 0/40 target paths still exist
+[2026-11-06T13:15:24.2026233+08:00] collected.zip written (2.6 MB)
+[2026-11-06T13:15:24.2073668+08:00] guest side complete

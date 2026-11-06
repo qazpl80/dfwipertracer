@@ -1,0 +1,8 @@
+[2026-10-14T14:07:41.2408440+08:00] run=0052_control_delete_recycle_hard_r1 tool=control_delete mode=recycle corpus=D:\corpus count=40
+[2026-10-14T14:07:42.9233728+08:00] ground truth recorded for 40 files
+[2026-10-14T14:07:42.9484146+08:00] volume-level command
+[2026-10-14T14:07:44.2096038+08:00] volume-level command returned 0
+[2026-10-14T14:08:00.8623617+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T14:08:00.8718891+08:00] 0/40 target paths still exist
+[2026-10-14T14:08:07.5410765+08:00] collected.zip written (2 MB)
+[2026-10-14T14:08:07.5508137+08:00] guest side complete

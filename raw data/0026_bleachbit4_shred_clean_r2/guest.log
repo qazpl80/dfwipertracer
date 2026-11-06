@@ -1,0 +1,11 @@
+[2026-10-14T12:38:20.9004166+08:00] run=0026_bleachbit4_shred_clean_r2 tool=bleachbit4 mode=shred corpus=D:\corpus count=40
+[2026-10-14T12:38:22.3658488+08:00] ground truth recorded for 40 files
+[2026-10-14T12:38:22.4017136+08:00] installer present: E:\bleachbit\bleachbit-4.6.0-setup.exe
+[2026-10-14T12:38:22.4040855+08:00] installing (timeout 300s): E:\bleachbit\bleachbit-4.6.0-setup.exe /allusers /S
+[2026-10-14T12:39:01.4699858+08:00] install returned 0
+[2026-10-14T12:39:01.4813103+08:00] binary present after 0s: C:\Program Files (x86)\BleachBit\bleachbit_console.exe
+[2026-10-14T12:39:24.8106074+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-10-14T12:39:41.1893721+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T12:39:41.1962020+08:00] 0/40 target paths still exist
+[2026-10-14T12:39:48.0239600+08:00] collected.zip written (2.1 MB)
+[2026-10-14T12:39:48.0300430+08:00] guest side complete

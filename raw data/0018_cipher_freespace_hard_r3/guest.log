@@ -1,0 +1,9 @@
+[2026-10-14T12:12:59.5504481+08:00] run=0018_cipher_freespace_hard_r3 tool=cipher mode=freespace corpus=D:\corpus count=40
+[2026-10-14T12:13:01.0104914+08:00] ground truth recorded for 40 files
+[2026-10-14T12:13:01.0359947+08:00] pre-step: Remove-Item -Path "D:\corpus\*" -Force -Recurse
+[2026-10-14T12:13:01.3810298+08:00] volume-level command
+[2026-10-14T12:13:15.5217560+08:00] volume-level command returned 0
+[2026-10-14T12:13:32.1082337+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T12:13:32.1155021+08:00] 0/40 target paths still exist
+[2026-10-14T12:13:37.1453326+08:00] collected.zip written (2.1 MB)
+[2026-10-14T12:13:37.1544125+08:00] guest side complete

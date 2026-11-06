@@ -1,0 +1,31 @@
+{
+  "run_id": "0038_eraser_pseudorandom_clean_r2",
+  "hypervisor": "VMware Workstation",
+  "started_utc": "2026-10-14T05:22:26.746068+00:00",
+  "matrix": {
+    "index": 38,
+    "tool_id": "eraser",
+    "mode": "pseudorandom",
+    "shutdown": "clean",
+    "repeat": 2
+  },
+  "stages": {
+    "revert": "ok",
+    "boot": "ok",
+    "guest_vmrun_rc": 0,
+    "guest_verdict": "OK",
+    "retrieve": "ok",
+    "shutdown": "clean",
+    "extract": {
+      "compressed": true,
+      "mft": "$MFT.gz",
+      "logfile": "$LogFile.gz",
+      "usnjrnl": "$J.gz",
+      "usnjrnl_address": "1018-128-3"
+    },
+    "extract_source": "Windows 11 x64-0-000001.vmdk",
+    "flatten_backend": "vmware-vdiskmanager"
+  },
+  "result": "ok",
+  "finished_utc": "2026-10-14T05:26:31.566540+00:00"
+}

@@ -1,0 +1,7 @@
+[2026-10-14T13:49:35.6467499+08:00] run=0045_control_delete_explorer_clean_r3 tool=control_delete mode=explorer corpus=D:\corpus count=40
+[2026-10-14T13:49:37.0791544+08:00] ground truth recorded for 40 files
+[2026-10-14T13:49:37.6056802+08:00] per-file stage: 40 attempted, 0 non-zero
+[2026-10-14T13:49:53.9649427+08:00] collected Prefetch + Amcache via VSS
+[2026-10-14T13:49:53.9724628+08:00] 0/40 target paths still exist
+[2026-10-14T13:50:00.5356655+08:00] collected.zip written (2 MB)
+[2026-10-14T13:50:00.5417694+08:00] guest side complete

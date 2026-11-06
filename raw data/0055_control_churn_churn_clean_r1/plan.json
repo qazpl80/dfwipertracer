@@ -1,0 +1,15 @@
+{
+  "display": "Control: benign rename-heavy activity",
+  "install": null,
+  "binary": null,
+  "await_targets_sec": 0,
+  "install_timeout_sec": 300,
+  "wipe_timeout_sec": 300,
+  "once_timeout_sec": 3600,
+  "pre": null,
+  "per_file": null,
+  "once": "# Rename bursts like Office autosave or Git checkouts - the main\n# confounder for rename-chain signatures. Must NOT delete anything.\n$files = Get-ChildItem -Path \"{dir}\" -File | Select-Object -First 40\nforeach ($f in $files) {\n  $tmp = Join-Path $f.DirectoryName (\"~$\" + [guid]::NewGuid().ToString(\"N\").Substring(0,8) + \".tmp\")\n  Rename-Item -LiteralPath $f.FullName -NewName (Split-Path $tmp -Leaf)\n  Start-Sleep -Milliseconds 20\n  Rename-Item -LiteralPath $tmp -NewName $f.Name\n}\n",
+  "corpus_dir": "D:\\corpus",
+  "wipe_count": 40,
+  "settle_seconds": 15
+}
