@@ -61,7 +61,8 @@ between its components, and how signatures and scoring work.
 ```
 wipertrace/
 ├── pyproject.toml
-├── README.md                      user manual (install, collect, analyze, demo)
+├── README.md                      what the tool is for, supported tools, validation, limitations
+├── docs/USER_MANUAL.md            user manual (install, collect, analyze, demo, troubleshooting)
 ├── docs/ARCHITECTURE.md           this file
 ├── wipertrace/
 │   ├── cli.py                     `wipertrace collect | analyze | rules | demo`
